@@ -1381,6 +1381,43 @@ body.ios-keyboard-open{
 .exp-tarikh-field.hidden-mode .exp-tarikh-input{
   background:var(--gray-100);
 }
+  /* iOS Dropdown Fix - Prevent Jumping */
+body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+select,
+input[type="text"],
+input[type="date"],
+textarea {
+  font-size: 16px !important; /* Prevent iOS zoom */
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS-only */
+  select {
+    position: relative;
+    z-index: 10;
+  }
+  
+  .field-wrap {
+    transform: translateZ(0);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  body.dropdown-active {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+}
 </style>
 </head>
 
@@ -2439,6 +2476,29 @@ function openSuccessModal(){
 function closeSuccessModal(){
   $('successModal').classList.remove('open');
 }
+</script>
+  <script>
+(function() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (!isIOS) return;
+  
+  let scrollPos = 0;
+  
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('focus', function() {
+      scrollPos = window.pageYOffset;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollPos}px`;
+      document.body.style.width = '100%';
+    });
+    
+    select.addEventListener('blur', function() {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      window.scrollTo(0, scrollPos);
+    });
+  });
+})();
 </script>
 </body>
 </html>
