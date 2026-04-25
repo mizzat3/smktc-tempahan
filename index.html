@@ -2386,28 +2386,28 @@ function submitForm(){
 /* =========================
    ADMIN MODAL
 ========================= */
-function openAdminModal(){
-  $('adminModal').classList.add('open');
-}
-function closeAdminModal(){
-  $('adminModal').classList.remove('open');
-}
-function submitAdminLogin(){
-  const user=$('adminUser').value;
-  const pass=$('adminPass').value;
-  google.script.run
-    .withSuccessHandler(function(url){
-      window.top.location.href = url;
-      closeAdminModal();
-    })
-    .withFailureHandler(function(err){
-      alert(err.message||err);
-    })
-    .loginAdmin(user,pass);
-}
-$('adminPass')?.addEventListener('keydown',e=>{
-  if(e.key==='Enter') submitAdminLogin();
-});
+//function openAdminModal(){
+// $('adminModal').classList.add('open');
+//}
+//function closeAdminModal(){
+  //$('adminModal').classList.remove('open');
+//}
+//function submitAdminLogin(){
+  //const user=$('adminUser').value;
+  //const pass=$('adminPass').value;
+  //google.script.run
+    //.withSuccessHandler(function(url){
+      //window.top.location.href = url;
+      //closeAdminModal();
+    //})
+    //.withFailureHandler(function(err){
+      //alert(err.message||err);
+    //})
+    //.loginAdmin(user,pass);
+//}
+//$('adminPass')?.addEventListener('keydown',e=>{
+  //if(e.key==='Enter') submitAdminLogin();
+//});
 
 /* =========================
    SUCCESS MODAL
