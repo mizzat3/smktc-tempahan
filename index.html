@@ -1381,43 +1381,98 @@ body.ios-keyboard-open{
 .exp-tarikh-field.hidden-mode .exp-tarikh-input{
   background:var(--gray-100);
 }
-  /* iOS Dropdown Fix - Prevent Jumping */
-body {
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-}
+/* ============================================ */
+/* AGGRESSIVE iOS DROPDOWN FIX */
+/* Copy ENTIRE content into your <style> section */
+/* This REPLACES previous fixes */
+/* ============================================ */
 
+/* CRITICAL: Prevent iOS from auto-zooming (main cause of jumping) */
 select,
 input[type="text"],
 input[type="date"],
+input[type="tel"],
+input[type="email"],
 textarea {
-  font-size: 16px !important; /* Prevent iOS zoom */
+  font-size: 16px !important; /* iOS won't zoom if >= 16px */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
+/* Disable iOS elastic scrolling completely */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto !important;
+  overflow-scrolling: auto !important;
+}
+
+/* Lock body scroll when any select is focused - iOS ONLY */
+@supports (-webkit-touch-callout: none) {
+  body {
+    position: relative;
+  }
+  
+  /* Prevent Safari from moving viewport */
+  body.select-open {
+    position: fixed !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    -webkit-overflow-scrolling: auto !important;
+  }
+}
+
+/* Force select to stay in position */
 select {
   -webkit-appearance: none;
   appearance: none;
+  transform: translateZ(0); /* GPU acceleration */
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
-@supports (-webkit-touch-callout: none) {
-  /* iOS-only */
-  select {
-    position: relative;
-    z-index: 10;
-  }
-  
-  .field-wrap {
-    transform: translateZ(0);
-  }
+/* Prevent iOS from scrolling to focused element */
+select:focus {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
+/* Add custom dropdown arrow since we removed default */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234B5563' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px !important;
+}
+
+/* Container stability */
+.field-wrap {
+  position: relative;
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* iOS-specific: Prevent Safari from adjusting layout */
 @media screen and (max-width: 768px) {
-  body.dropdown-active {
-    position: fixed;
-    width: 100%;
-    overflow: hidden;
+  @supports (-webkit-touch-callout: none) {
+    .container {
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    /* Lock scroll during interaction */
+    html.ios-select-open,
+    body.ios-select-open {
+      position: fixed !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
   }
 }
+
+/* ============================================ */
+/* END OF AGGRESSIVE CSS FIX */
+/* ============================================ */
 </style>
 </head>
 
@@ -2476,29 +2531,193 @@ function openSuccessModal(){
 function closeSuccessModal(){
   $('successModal').classList.remove('open');
 }
- <script>
+</script>
+  /* ============================================ */
+/* AGGRESSIVE iOS DROPDOWN FIX - JAVASCRIPT */
+/* Paste BEFORE closing </body> tag */
+/* This REPLACES previous JavaScript fixes */
+/* ============================================ */
+
+<script>
 (function() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (!isIOS) return;
+  'use strict';
   
-  let scrollPos = 0;
+  // Detect iOS - all versions
+  const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && 
+    !window.MSStream;
   
-  document.querySelectorAll('select').forEach(select => {
-    select.addEventListener('focus', function() {
-      scrollPos = window.pageYOffset;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPos}px`;
-      document.body.style.width = '100%';
-    });
+  if (!isIOS) {
+    console.log('Not iOS - skipping dropdown fix');
+    return;
+  }
+  
+  console.log('iOS detected - applying AGGRESSIVE dropdown fix');
+  
+  let scrollPosition = 0;
+  let isSelectOpen = false;
+  
+  // Get all select elements
+  const allSelects = document.querySelectorAll('select');
+  
+  if (allSelects.length === 0) {
+    console.log('No select elements found');
+    return;
+  }
+  
+  console.log('Found', allSelects.length, 'select elements');
+  
+  // Function to lock scroll
+  function lockScroll() {
+    if (isSelectOpen) return; // Already locked
     
-    select.addEventListener('blur', function() {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      window.scrollTo(0, scrollPos);
-    });
+    isSelectOpen = true;
+    scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    
+    // Add classes
+    document.documentElement.classList.add('ios-select-open');
+    document.body.classList.add('ios-select-open', 'select-open');
+    
+    // Lock position
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollPosition}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    console.log('Scroll locked at position:', scrollPosition);
+  }
+  
+  // Function to unlock scroll
+  function unlockScroll() {
+    if (!isSelectOpen) return; // Already unlocked
+    
+    isSelectOpen = false;
+    
+    // Remove classes
+    document.documentElement.classList.remove('ios-select-open');
+    document.body.classList.remove('ios-select-open', 'select-open');
+    
+    // Unlock position
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    
+    // Restore scroll position
+    window.scrollTo(0, scrollPosition);
+    
+    console.log('Scroll unlocked, restored to:', scrollPosition);
+  }
+  
+  // Apply to each select
+  allSelects.forEach((select, index) => {
+    console.log('Applying fix to select', index + 1);
+    
+    // Focus event - lock immediately
+    select.addEventListener('focus', function(e) {
+      console.log('Select focused:', this.name || this.id || 'unnamed');
+      lockScroll();
+    }, { passive: true });
+    
+    // Blur event - unlock
+    select.addEventListener('blur', function(e) {
+      console.log('Select blurred:', this.name || this.id || 'unnamed');
+      // Small delay to ensure selection is complete
+      setTimeout(unlockScroll, 100);
+    }, { passive: true });
+    
+    // Change event - ensure unlock happens
+    select.addEventListener('change', function(e) {
+      console.log('Select changed:', this.name || this.id || 'unnamed');
+      setTimeout(unlockScroll, 150);
+    }, { passive: true });
+    
+    // TouchEnd - backup unlock
+    select.addEventListener('touchend', function(e) {
+      // Unlock after touch ends (selection made)
+      setTimeout(function() {
+        if (document.activeElement !== select) {
+          unlockScroll();
+        }
+      }, 200);
+    }, { passive: true });
   });
+  
+  // Prevent document scroll when select is focused
+  let lastActiveElement = null;
+  
+  document.addEventListener('touchmove', function(e) {
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.tagName === 'SELECT') {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, { passive: false });
+  
+  // Monitor active element changes
+  setInterval(function() {
+    const activeEl = document.activeElement;
+    
+    if (activeEl && activeEl.tagName === 'SELECT') {
+      if (!isSelectOpen) {
+        lockScroll();
+      }
+    } else {
+      if (isSelectOpen && lastActiveElement && lastActiveElement.tagName === 'SELECT') {
+        unlockScroll();
+      }
+    }
+    
+    lastActiveElement = activeEl;
+  }, 100);
+  
+  // Additional: Prevent iOS Safari from auto-scrolling to input
+  document.addEventListener('focusin', function(e) {
+    if (e.target && e.target.tagName === 'SELECT') {
+      e.preventDefault();
+      lockScroll();
+    }
+  }, { passive: false });
+  
+  // Force viewport meta to prevent zoom
+  let viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport) {
+    const originalContent = viewport.getAttribute('content');
+    
+    // Lock viewport on select focus
+    allSelects.forEach(select => {
+      select.addEventListener('focus', function() {
+        viewport.setAttribute('content', 
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+        );
+      });
+      
+      select.addEventListener('blur', function() {
+        setTimeout(() => {
+          viewport.setAttribute('content', originalContent);
+        }, 300);
+      });
+    });
+  }
+  
+  console.log('iOS AGGRESSIVE dropdown fix installed successfully');
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', function() {
+    unlockScroll();
+  });
+  
 })();
 </script>
+
+/* ============================================ */
+/* END OF AGGRESSIVE JAVASCRIPT FIX */
+/* ============================================ */
 </body>
 </html>
 <!-- PWA Service Worker Registration -->
