@@ -2384,27 +2384,6 @@ function submitForm(){
 }
 
 /* =========================
-   iOS KEYBOARD FIX
-========================= */
-(function iosKeyboardFix(){
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  if(!isIOS)return;
-  document.addEventListener('focusin',e=>{
-    const t=e.target;
-    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
-      document.body.classList.add('ios-keyboard-open');
-      setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},250);
-    }
-  });
-  document.addEventListener('focusout',e=>{
-    const t=e.target;
-    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
-      setTimeout(()=>document.body.classList.remove('ios-keyboard-open'),250);
-    }
-  });
-})();
-
-/* =========================
    ADMIN MODAL
 ========================= */
 function openAdminModal(){
