@@ -2,8 +2,7 @@
 <html>
 <head>
   <base target="_top">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
   <!-- PWA Meta Tags -->
   <meta name="application-name" content="Tempahan SMKTC">
   <meta name="description" content="Sistem Tempahan Eksperimen SMK Taman Connaught">
@@ -93,6 +92,61 @@ html,body{
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
+  /* iOS fixes */
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent iOS Safari from jumping when select is focused */
+body.ios-select-open {
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* iOS-specific select improvements */
+@supports (-webkit-touch-callout: none) {
+  /* This targets iOS Safari specifically */
+  select {
+    /* Prevent iOS from adding default styling */
+    -webkit-appearance: none;
+    appearance: none;
+    
+    /* Better touch handling */
+    -webkit-tap-highlight-color: rgba(0, 120, 212, 0.1);
+    
+    /* Prevent text selection */
+    -webkit-user-select: none;
+    user-select: none;
+    
+    /* Smooth rendering */
+    -webkit-font-smoothing: antialiased;
+    
+    /* Keep element stable */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    
+    /* Hardware acceleration */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+  
+  /* When select is focused on iOS */
+  select:focus {
+    /* Prevent zoom */
+    font-size: 16px !important;
+    
+    /* Keep stable position */
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Prevent body scroll when iOS picker is open */
+  body.ios-keyboard-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
 }
 
 /* ===== WATERMARK ===== */
@@ -328,11 +382,27 @@ input, select, textarea{
   transition:all 0.2s ease;
   -webkit-appearance:none;
   appearance:none;
+  /* iOS-specific fixes */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
+
+/* Prevent iOS from zooming on focus */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px; /* iOS won't zoom if font-size >= 16px */
+  }
+}
+
 input:focus, select:focus, textarea:focus{
   border-color:var(--accent);
   box-shadow:0 0 0 3px rgba(0,120,212,0.08);
   background:#FAFBFC;
+  /* Keep element in place on iOS */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 input::placeholder, textarea::placeholder{
   color:var(--gray-400);
@@ -1375,22 +1445,6 @@ body.ios-keyboard-open{
 .kelas-badge:not(.has-individual-date) .kelas-badge-date-row{
   display:none;
 }
-  /* Add to <style> section */
-select, input, textarea {
-  font-size: 16px !important;
-}
-
-body {
-  overscroll-behavior-y: none;
-}
-
-select {
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23666' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
-}
 .exp-tarikh-field.hidden-mode{
   opacity:0.5;
   pointer-events:none;
@@ -2406,18 +2460,61 @@ function submitForm(){
 (function iosKeyboardFix(){
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
   if(!isIOS)return;
+  
+  let scrollPos = 0;
+  
+  // Handle focus
   document.addEventListener('focusin',e=>{
     const t=e.target;
     if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
+      // Save current scroll position
+      scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+      
       document.body.classList.add('ios-keyboard-open');
-      setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},250);
+      
+      // For SELECT elements, prevent the jumping
+      if(t.tagName === 'SELECT') {
+        document.body.classList.add('ios-select-open');
+        // Smooth scroll to element
+        setTimeout(()=>{
+          try{
+            const rect = t.getBoundingClientRect();
+            const absoluteTop = rect.top + window.pageYOffset;
+            const middle = absoluteTop - (window.innerHeight / 2) + (rect.height / 2);
+            window.scrollTo({top: middle, behavior: 'smooth'});
+          }catch(_){}
+        }, 100);
+      } else {
+        // For INPUT/TEXTAREA, use original behavior
+        setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},250);
+      }
     }
   });
+  
+  // Handle blur
   document.addEventListener('focusout',e=>{
     const t=e.target;
     if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
-      setTimeout(()=>document.body.classList.remove('ios-keyboard-open'),250);
+      setTimeout(()=>{
+        document.body.classList.remove('ios-keyboard-open');
+        document.body.classList.remove('ios-select-open');
+      },250);
     }
+  });
+  
+  // Prevent scroll during select interaction on iOS
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('touchstart', (e) => {
+      // Lock scroll position
+      scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+    }, {passive: true});
+    
+    select.addEventListener('change', () => {
+      // Restore scroll position after selection
+      setTimeout(() => {
+        window.scrollTo(0, scrollPos);
+      }, 50);
+    });
   });
 })();
 
@@ -2456,37 +2553,6 @@ function openSuccessModal(){
 function closeSuccessModal(){
   $('successModal').classList.remove('open');
 }
-  <script>
-(function() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (!isIOS) return;
-  
-  let scrollY = 0;
-  let isLocked = false;
-  
-  function lockPosition() {
-    if (isLocked) return;
-    isLocked = true;
-    scrollY = window.pageYOffset;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-  }
-  
-  function unlockPosition() {
-    if (!isLocked) return;
-    isLocked = false;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    window.scrollTo(0, scrollY);
-  }
-  
-  document.querySelectorAll('select').forEach(select => {
-    select.addEventListener('focus', lockPosition, { passive: true, capture: true });
-    select.addEventListener('change', () => setTimeout(unlockPosition, 100), { passive: true });
-    select.addEventListener('blur', () => setTimeout(unlockPosition, 100), { passive: true });
-  });
-})();
 </script>
 </body>
 </html>
