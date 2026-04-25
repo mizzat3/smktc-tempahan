@@ -1374,6 +1374,22 @@ body.ios-keyboard-open{
 .kelas-badge:not(.has-individual-date) .kelas-badge-date-row{
   display:none;
 }
+  /* Add to <style> section */
+select, input, textarea {
+  font-size: 16px !important;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+select {
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23666' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
 .exp-tarikh-field.hidden-mode{
   opacity:0.5;
   pointer-events:none;
@@ -2439,6 +2455,37 @@ function openSuccessModal(){
 function closeSuccessModal(){
   $('successModal').classList.remove('open');
 }
+  <script>
+(function() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (!isIOS) return;
+  
+  let scrollY = 0;
+  let isLocked = false;
+  
+  function lockPosition() {
+    if (isLocked) return;
+    isLocked = true;
+    scrollY = window.pageYOffset;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+  }
+  
+  function unlockPosition() {
+    if (!isLocked) return;
+    isLocked = false;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    window.scrollTo(0, scrollY);
+  }
+  
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('focus', lockPosition, { passive: true, capture: true });
+    select.addEventListener('change', () => setTimeout(unlockPosition, 100), { passive: true });
+    select.addEventListener('blur', () => setTimeout(unlockPosition, 100), { passive: true });
+  });
+})();
 </script>
 </body>
 </html>
