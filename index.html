@@ -1452,6 +1452,18 @@ body.ios-keyboard-open{
 .exp-tarikh-field.hidden-mode .exp-tarikh-input{
   background:var(--gray-100);
 }
+  /* iOS Select Stabilizer */
+@supports (-webkit-touch-callout: none) {
+  select {
+    font-size: 16px !important;
+  }
+  
+  body.ios-selecting {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+}
 </style>
 </head>
 
@@ -2425,7 +2437,18 @@ function collectRowsData(){
   
   return result;
 }
-
+/* Simple iOS Select Fix */
+function(){
+  if(!/iPhone|iPad|iPod/.test(navigator.userAgent)) return;
+  
+  document.querySelectorAll('select').forEach(sel => {
+    let y = 0;
+    sel.addEventListener('touchstart', () => { y = window.pageYOffset; });
+    sel.addEventListener('blur', () => { 
+      setTimeout(() => window.scrollTo(0, y), 50); 
+    });
+  });
+})();
 function submitForm(){
   clearError();
   const err=validateForm();
@@ -2455,67 +2478,28 @@ function submitForm(){
 }
 
 /* =========================
-   iOS KEYBOARD FIX
+   iOS SELECT FIX
 ========================= */
-(function iosKeyboardFix(){
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-  if(!isIOS)return;
+(function(){
+  if(!/iPhone|iPad|iPod/.test(navigator.userAgent)) return;
   
   let scrollPos = 0;
   
-  // Handle focus
-  document.addEventListener('focusin',e=>{
-    const t=e.target;
-    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
-      // Save current scroll position
-      scrollPos = window.pageYOffset || document.documentElement.scrollTop;
-      
-      document.body.classList.add('ios-keyboard-open');
-      
-      // For SELECT elements, prevent the jumping
-      if(t.tagName === 'SELECT') {
-        document.body.classList.add('ios-select-open');
-        // Smooth scroll to element
-        setTimeout(()=>{
-          try{
-            const rect = t.getBoundingClientRect();
-            const absoluteTop = rect.top + window.pageYOffset;
-            const middle = absoluteTop - (window.innerHeight / 2) + (rect.height / 2);
-            window.scrollTo({top: middle, behavior: 'smooth'});
-          }catch(_){}
-        }, 100);
-      } else {
-        // For INPUT/TEXTAREA, use original behavior
-        setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},250);
-      }
+  document.addEventListener('focus', (e) => {
+    if(e.target.tagName === 'SELECT'){
+      scrollPos = window.pageYOffset;
+      document.body.style.top = `-${scrollPos}px`;
+      document.body.classList.add('ios-selecting');
     }
-  });
+  }, true);
   
-  // Handle blur
-  document.addEventListener('focusout',e=>{
-    const t=e.target;
-    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')){
-      setTimeout(()=>{
-        document.body.classList.remove('ios-keyboard-open');
-        document.body.classList.remove('ios-select-open');
-      },250);
+  document.addEventListener('blur', (e) => {
+    if(e.target.tagName === 'SELECT'){
+      document.body.classList.remove('ios-selecting');
+      document.body.style.top = '';
+      window.scrollTo(0, scrollPos);
     }
-  });
-  
-  // Prevent scroll during select interaction on iOS
-  document.querySelectorAll('select').forEach(select => {
-    select.addEventListener('touchstart', (e) => {
-      // Lock scroll position
-      scrollPos = window.pageYOffset || document.documentElement.scrollTop;
-    }, {passive: true});
-    
-    select.addEventListener('change', () => {
-      // Restore scroll position after selection
-      setTimeout(() => {
-        window.scrollTo(0, scrollPos);
-      }, 50);
-    });
-  });
+  }, true);
 })();
 
 /* =========================
