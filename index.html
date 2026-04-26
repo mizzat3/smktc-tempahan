@@ -989,18 +989,16 @@ body.ios-keyboard-open .admin-float{
 
 /* ===== FOOTER ===== */
 .footer {
-  display: table !important; /* Paksa ia bertindak sebagai kotak yang boleh dikawal */
-  margin-left: auto !important;
-  margin-right: auto !important;
-  text-align: center !important;
-  width: auto !important;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%); /* Anjak balik ke tengah tepat */
+  white-space: nowrap; /* Elakkan teks pecah dua baris */
+  text-align: center;
   
   /* Gaya asal */
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 30px;
-  padding: 24px 0px;
-  font-weight: 500;
 }
 
 /* ===== MODALS ===== */
