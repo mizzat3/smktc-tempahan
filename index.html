@@ -1427,8 +1427,10 @@ body.ios-keyboard-open{
         <label class="field-label">Nama Guru</label>
         <div class="field-input-wrap">
           <span class="field-icon">👤</span>
-          <input type="text" id="namaGuru" placeholder="Contoh: Cikgu Ali"
-            autocapitalize="words" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="namaGuru" placeholder="Contoh: CIKGU ALI"
+            autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"
+            style="text-transform:uppercase"
+            oninput="this.value = this.value.toUpperCase()">
         </div>
       </div>
 
