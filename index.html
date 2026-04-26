@@ -989,17 +989,19 @@ body.ios-keyboard-open .admin-float{
 
 /* ===== FOOTER ===== */
 .footer {
-  display: flex;
-  justify-content: center; /* Center secara horizontal */
-  align-items: center;     /* Center secara vertical */
-  width: 100%;
+  display: flex !important;      /* Paksa guna flexbox */
+  justify-content: center !important; /* Paksa teks ke tengah secara horizontal */
+  width: 100% !important;        /* Paksa ambil lebar penuh container */
+  left: 0;
+  right: 0;
   
-  /* Kod gaya anda */
-  font-size: 11px; /* Anda kata dah kecilkan font */
+  /* Kekalkan gaya anda */
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 20px;
-  padding: 24px 0; /* Buang padding kiri kanan supaya tak senget */
+  margin-top: 30px; /* Tambah sikit ruang atas */
+  padding: 24px 0px; 
   font-weight: 500;
+  letter-spacing: 0.2px;
   text-align: center;
 }
 
