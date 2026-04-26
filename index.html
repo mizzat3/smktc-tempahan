@@ -988,17 +988,28 @@ body.ios-keyboard-open .admin-float{
 }
 
 /* ===== FOOTER ===== */
+/* ===== FOOTER ===== */
 .footer {
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%); /* Anjak balik ke tengah tepat */
-  white-space: nowrap; /* Elakkan teks pecah dua baris */
-  text-align: center;
+  /* 1. Paksa elemen ambil ruang penuh */
+  display: block !important;
+  width: 100% !important;
+    flex: 0 0 100%;
+  /* 2. Paksa teks ke tengah */
+  text-align: center !important;
   
-  /* Gaya asal */
+  /* 3. Bersihkan sebarang gangguan luar */
+  clear: both !important;
+  float: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  /* 4. Gaya visual anda */
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 30px;
+  padding: 24px 0px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 /* ===== MODALS ===== */
